@@ -1,0 +1,29 @@
+#_dash {
+  display: flex;
+  flex-wrap: row;
+  height: 100vh;
+}
+
+#nav {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-right: solid;
+}
+
+.nav-logo {
+  margin: 20px
+}
+
+.nav-link {
+  color: black;
+  width: 100%;
+  text-align: center;
+  padding: 10px;
+}
+
+.nav-active {
+  background-color: steelblue;
+  color: white;
+  font-weight: 400;
+}

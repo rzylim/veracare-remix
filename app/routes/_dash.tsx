@@ -1,0 +1,36 @@
+import type { LinksFunction } from "@remix-run/node";
+import { Outlet, Link, useMatches } from "@remix-run/react";
+
+import stylesUrl from "~/styles/navigation.css";
+
+export const links: LinksFunction = () => [
+  { rel: "stylesheet", href: stylesUrl },
+];
+
+export default function NavBar() {
+  const pathnames = useMatches().map(({ pathname }) => pathname);
+  console.log(pathnames);
+
+  return (
+    <div id="_dash">
+      <div id="nav">
+        <h1 className="nav-logo">VeraCare</h1>
+        <Link
+          className={`nav-link ${
+            pathnames.includes("/schedule") && "nav-active"
+          }`}
+          to="/schedule"
+        >
+          Schedule
+        </Link>
+        <Link
+          className={`nav-link ${pathnames.includes("/add-task")}`}
+          to="/add-task"
+        >
+          Add Task
+        </Link>
+      </div>
+      <Outlet />
+    </div>
+  );
+}
