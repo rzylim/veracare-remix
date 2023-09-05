@@ -1,0 +1,25 @@
+.agenda-item {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  background-Color: grey,
+}
+
+.agenda-item .time-location {
+  flex: 0.5;
+  padding: 15px;
+  justify-content: flex-start;
+  border-right-width: 1;
+  gap: 10px,
+}
+
+.agenda-item p {
+  text-align: left;
+}
+
+.agenda-item .task-details {
+  flex: 1;
+  padding: 15px;
+  justify-content: flex-start;
+  gap: 10px,
+}

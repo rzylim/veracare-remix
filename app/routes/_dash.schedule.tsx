@@ -1,158 +1,109 @@
-import type {
-  ActionArgs,
-  LinksFunction,
-  V2_MetaFunction,
-} from "@remix-run/node";
-import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
+import { useState } from "react";
+import type { LinksFunction, LoaderArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import { Form, Link, useLoaderData } from "@remix-run/react";
+import { useLongPress } from "use-long-press";
 
-import stylesUrl from "~/styles/login.css";
-// import { db } from "~/utils/db.server";
-import { badRequest } from "~/utils/request.server";
-import { createUserSession } from "~/utils/session.server";
+import { createScheduledTasks } from "~/utils/task-converters";
+import { mapDayOfWeekString } from "~/utils/date-time";
+
+import type { ScheduledTask } from "types";
+
+import stylesUrl from "~/styles/schedule.css";
+
 import { simulateFetch } from "~/utils/simulate-network.server";
-
-import type { User } from "types";
+import { testSchedule } from "~/placeholder-data/schedule";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesUrl },
 ];
 
-export const meta: V2_MetaFunction = () => {
-  const description = "Login to submit your own jokes to Remix Jokes!";
+const locale = "en-SG";
+const timeConfig: Parameters<Date["toLocaleTimeString"]> = [
+  locale,
+  {
+    // timeZoneName: 'short', // display the abbreviated time zone name
+    // weekday: 'long', // display the full day of the week name
+    // year: 'numeric',
+    // month: '2-digit',
+    // day: '2-digit',
+    hour12: false,
+    hour: "numeric",
+    minute: "numeric",
+    // second: 'numeric',
+  },
+];
 
-  return [
-    { name: "description", content: description },
-    { name: "twitter:description", content: description },
-    { title: "Remix Jokes | Login" },
-  ];
-};
+function AgendaItem({ item }: { item: ScheduledTask }) {
+  const [menuVisible, setMenuVisible] = useState(false);
 
-function validateUsername(username: string) {
-  if (username.length < 3) {
-    return "Usernames must be at least 3 characters long";
-  }
-}
+  const { eid, startTime, endTime, facility, task_name, residents } = item;
 
-function validatePassword(password: string) {
-  if (password.length < 6) {
-    return "Passwords must be at least 6 characters long";
-  }
-}
+  const startTimeString = startTime.toLocaleTimeString(...timeConfig);
+  const endTimeString = endTime.toLocaleTimeString(...timeConfig);
+  const dayOfWeekString = mapDayOfWeekString[startTime.getDay()];
+  const dateString = startTime.toLocaleDateString(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
-function validateUrl(url: string) {
-  const urls = ["/jokes", "/", "https://remix.run"];
-  if (urls.includes(url)) {
-    return url;
-  }
-  return "/jokes";
-}
+  const bindLongPress = useLongPress(() => {
+    setMenuVisible(true);
+  });
 
-// placeholder user data.
-const testUser: User = {
-  uid: "u5uid",
-  name: `name-of-u5`,
-  alias: `alias-of-u5`,
-  profilePicture: "https://picsum.photos/200",
-  languages: ["English"],
-};
-
-export const action = async ({ request }: ActionArgs) => {
-  const form = await request.formData();
-  const loginType = form.get("loginType");
-  const password = form.get("password");
-  const username = form.get("username");
-  const redirectTo = validateUrl(
-    (form.get("redirectTo") as string) || "/schedule"
+  return menuVisible ? (
+    <div className="agenda-item"></div>
+  ) : (
+    <div className="agenda-item" {...bindLongPress()}>
+      <div className="time-location">
+        <h2>{`${startTimeString} - ${endTimeString}`}</h2>
+        <p>{`${dayOfWeekString}\n${dateString}`}</p>
+        <p>{facility}</p>
+      </div>
+      <div
+        className="task-details"
+        style={{
+          flex: 1,
+          padding: 15,
+          justifyContent: "flex-start",
+          gap: 10,
+        }}
+      >
+        <h2>{task_name}</h2>
+        {!residents?.length ? null : residents.length === 1 ? (
+          // show full details for single resident.
+          <div>
+            <div>{`${residents[0].name} (a.k.a ${residents[0].alias}), ${residents[0].room}`}</div>
+            <div>{`Allergies: ${residents[0].allergies.join(", ")}`}</div>
+            <div>{`Languages: ${residents[0].languages.join(", ")}`}</div>
+          </div>
+        ) : (
+          // show list of residents for group events.
+          <div>{residents?.map((user) => user.name).join(", ")}</div>
+        )}
+      </div>
+    </div>
   );
-  if (
-    typeof loginType !== "string" ||
-    typeof password !== "string" ||
-    typeof username !== "string"
-  ) {
-    return badRequest({
-      fieldErrors: null,
-      fields: null,
-      formError: "Form not submitted correctly.",
-    });
-  }
+}
 
-  const fields = { loginType, password, username };
-  const fieldErrors = {
-    password: validatePassword(password),
-    username: validateUsername(username),
-  };
-  if (Object.values(fieldErrors).some(Boolean)) {
-    return badRequest({
-      fieldErrors,
-      fields,
-      formError: null,
-    });
-  }
+export const loader = async ({ request }: LoaderArgs) => {
+  // const scheduleArr =  await fetch({ ...request, url: "verabackend.com/schedule" });
+  const scheduleArr = await simulateFetch(testSchedule);
 
-  switch (loginType) {
-    case "login": {
-      // const user =  await fetch({ ...request, url: "verabackend.com/login" });
-      const user = await simulateFetch(
-        username === testUser.uid ? testUser : null
-      );
-      // const user = await login({ username, password });
-      // console.log({ user });
-      if (!user) {
-        // KIV just return result of fetch, other backend to handle errors?
-        return badRequest({
-          fieldErrors: null,
-          fields,
-          formError: "Username/Password combination is incorrect",
-        });
-      }
-      // KIV session to be handled by other backend?
-      return createUserSession(user.uid, redirectTo);
-    }
-    case "register": {
-      // const userExists =  await fetch({ ...request, url: "verabackend.com/register" });
-      const userExists: boolean = await simulateFetch(
-        username === testUser.uid
-      );
-      // const userExists = await db.user.findFirst({ where: { username } });
-      if (userExists) {
-        // KIV just return result of fetch, other backend to handle errors?
-        return badRequest({
-          fieldErrors: null,
-          fields,
-          formError: `User with username ${username} already exists`,
-        });
-      }
-      // const userExists =  await fetch({ ...request, url: "verabackend.com/register" });
-      const user = await simulateFetch(testUser);
-      // const user = await register({ username, password });
-      if (!user) {
-        // KIV just return result of fetch, other backend to handle errors?
-        return badRequest({
-          fieldErrors: null,
-          fields,
-          formError: "Something went wrong trying to create a new user.",
-        });
-      }
-      // KIV session to be handled by other backend?
-      return createUserSession(user.uid, redirectTo);
-    }
-    default: {
-      // KIV just return result of fetch, other backend to handle errors?
-      return badRequest({
-        fieldErrors: null,
-        fields,
-        formError: "Login type invalid",
-      });
-    }
-  }
+  return json(scheduleArr);
 };
 
-export default function Login() {
-  const actionData = useActionData<typeof action>();
-  const [searchParams] = useSearchParams();
+export default function ScheduleRoute() {
+  const data = useLoaderData<typeof loader>();
+  const schedule = createScheduledTasks(data);
+
   return (
     <div className="container">
-      <div className="content" data-light="">
+      {Object.values(schedule).map((item) => (
+        <AgendaItem item={item} key={item.eid} />
+      ))}
+      {/* <div className="content" data-light="">
         <h1>Login</h1>
         <Form method="post">
           <input
@@ -249,7 +200,7 @@ export default function Login() {
             <Link to="/jokes">Jokes</Link>
           </li>
         </ul>
-      </div>
+      </div> */}
     </div>
   );
 }

@@ -3,15 +3,16 @@ import type {
   LinksFunction,
   V2_MetaFunction,
 } from "@remix-run/node";
-import { Form, Link, useActionData, useSearchParams } from "@remix-run/react";
+import { Form, useActionData, useSearchParams } from "@remix-run/react";
 
-import stylesUrl from "~/styles/login.css";
 // import { db } from "~/utils/db.server";
 import { badRequest } from "~/utils/request.server";
 import { createUserSession } from "~/utils/session.server";
 import { simulateFetch } from "~/utils/simulate-network.server";
 
-import type { User } from "types";
+import stylesUrl from "~/styles/login.css";
+
+import { testUser } from "~/placeholder-data/user";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesUrl },
@@ -40,21 +41,12 @@ function validatePassword(password: string) {
 }
 
 function validateUrl(url: string) {
-  const urls = ["/jokes", "/", "https://remix.run"];
+  const urls = ["/schedule", "/"];
   if (urls.includes(url)) {
     return url;
   }
-  return "/jokes";
+  return "/schedule";
 }
-
-// placeholder user data.
-const testUser: User = {
-  uid: "u5uid",
-  name: `name-of-u5`,
-  alias: `alias-of-u5`,
-  profilePicture: "https://picsum.photos/200",
-  languages: ["English"],
-};
 
 export const action = async ({ request }: ActionArgs) => {
   const form = await request.formData();
@@ -239,16 +231,6 @@ export default function Login() {
             Submit
           </button>
         </Form>
-      </div>
-      <div className="links">
-        <ul>
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/jokes">Jokes</Link>
-          </li>
-        </ul>
       </div>
     </div>
   );
