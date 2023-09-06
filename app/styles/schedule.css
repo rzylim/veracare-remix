@@ -1,25 +1,33 @@
 .agenda-item {
+  display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: stretch;
   justify-content: flex-start;
-  background-Color: grey,
+  background-color: grey;
+  border: solid;
 }
 
 .agenda-item .time-location {
   flex: 0.5;
   padding: 15px;
   justify-content: flex-start;
-  border-right-width: 1;
-  gap: 10px,
+  border-right: solid;
 }
 
 .agenda-item p {
   text-align: left;
 }
 
-.agenda-item .task-details {
+.agenda-item .task-details-actions {
   flex: 1;
+}
+
+.agenda-item .task-details {
   padding: 15px;
   justify-content: flex-start;
-  gap: 10px,
+}
+
+.agenda-item .task-actions-container {
+  padding: 15px;
+  border-top: solid;
 }

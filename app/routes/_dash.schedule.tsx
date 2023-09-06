@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { LinksFunction, LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Form, Link, useLoaderData } from "@remix-run/react";
+import { useLoaderData } from "@remix-run/react";
 import { useLongPress } from "use-long-press";
 
 import { createScheduledTasks } from "~/utils/task-converters";
@@ -49,38 +49,37 @@ function AgendaItem({ item }: { item: ScheduledTask }) {
   });
 
   const bindLongPress = useLongPress(() => {
-    setMenuVisible(true);
+    setMenuVisible(!menuVisible);
   });
 
-  return menuVisible ? (
-    <div className="agenda-item"></div>
-  ) : (
+  return (
     <div className="agenda-item" {...bindLongPress()}>
       <div className="time-location">
         <h2>{`${startTimeString} - ${endTimeString}`}</h2>
         <p>{`${dayOfWeekString}\n${dateString}`}</p>
         <p>{facility}</p>
       </div>
-      <div
-        className="task-details"
-        style={{
-          flex: 1,
-          padding: 15,
-          justifyContent: "flex-start",
-          gap: 10,
-        }}
-      >
-        <h2>{task_name}</h2>
-        {!residents?.length ? null : residents.length === 1 ? (
-          // show full details for single resident.
-          <div>
-            <div>{`${residents[0].name} (a.k.a ${residents[0].alias}), ${residents[0].room}`}</div>
-            <div>{`Allergies: ${residents[0].allergies.join(", ")}`}</div>
-            <div>{`Languages: ${residents[0].languages.join(", ")}`}</div>
+      <div className="task-details-actions">
+        <div className="task-details">
+          <h2>{task_name}</h2>
+          {!residents?.length ? null : residents.length === 1 ? (
+            // show full details for single resident.
+            <div>
+              <div>{`${residents[0].name} (a.k.a ${residents[0].alias}), ${residents[0].room}`}</div>
+              <div>{`Allergies: ${residents[0].allergies.join(", ")}`}</div>
+              <div>{`Languages: ${residents[0].languages.join(", ")}`}</div>
+            </div>
+          ) : (
+            // show list of residents for group events.
+            <div>{residents?.map((user) => user.name).join(", ")}</div>
+          )}
+        </div>
+        {menuVisible && (
+          <div className="task-actions-container">
+            <div>Cancel</div>
+            <div>Complete</div>
+            <div>Extend 30 mins</div>
           </div>
-        ) : (
-          // show list of residents for group events.
-          <div>{residents?.map((user) => user.name).join(", ")}</div>
         )}
       </div>
     </div>
